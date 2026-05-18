@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RAWSTUDIO - Éditeur Photo</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <div class="app-container">
+    
+    <!-- PANEL GAUCHE — Préréglages -->
+    <aside class="left-panel">
+      <div class="panel-title">Préréglages</div>
+      <div id="presets-container" class="button-list">
+        <!-- Les boutons presets seront générés ici par JS -->
+      </div>
+    </aside>
+
+    <!-- CENTRE — Zone d'affichage et Canva -->
+    <main class="center-area">
+      <!-- Barre supérieure -->
+      <header class="top-bar">
+        <div class="brand">RAWSTUDIO</div>
+        <div class="divider"></div>
+        <div id="image-name" class="info-text"></div>
+        <div id="image-dimensions" class="info-text dimmed"></div>
+        <div class="spacer"></div>
+        <button id="btn-import-top" class="action-btn secondary">Importer</button>
+        <button id="btn-export-top" class="action-btn primary" disabled>Exporter PNG</button>
+        <input type="file" id="file-input" accept="image/*" style="display: none;">
+      </header>
+
+      <!-- Zone de dépôt / Image -->
+      <div id="drop-zone" class="image-area">
+        <!-- État initial : vide -->
+        <div id="upload-placeholder" class="placeholder-box">
+          <div class="placeholder-icon">⬡</div>
+          <div class="placeholder-text">Déposez une photo ou cliquez pour importer</div>
+          <div class="placeholder-subtext">JPG · PNG · WEBP</div>
+        </div>
+        
+        <!-- État actif : Image chargée -->
+        <div id="image-wrapper" class="image-wrapper hidden">
+          <img id="preview-image" alt="Aperçu édition">
+          <div id="vignette-overlay" class="vignette-overlay"></div>
+        </div>
+      </div>
+    </main>
+
+    <!-- PANEL DROIT — Réglages & Sliders -->
+    <aside class="right-panel">
+      <!-- Onglets de section -->
+      <nav id="sections-tabs" class="tabs-nav">
+        <button class="section-tab active" data-section="light">Lumière</button>
+        <button class="section-tab" data-section="color">Couleur</button>
+        <button class="section-tab" data-section="detail">Détail</button>
+        <button class="section-tab" data-section="effects">Effets</button>
+      </nav>
+
+      <!-- Conteneur de Sliders dynamiques -->
+      <div id="sliders-container" class="sliders-body">
+        <!-- Les curseurs de réglages seront injectés ici selon l'onglet actif -->
+      </div>
+
+      <!-- Pied de page du panel -->
+      <footer class="panel-footer">
+        <div class="footer-actions">
+          <button id="btn-reset" class="action-btn outline">Réinitialiser</button>
+          <button id="btn-export-bottom" class="action-btn primary" disabled>Exporter</button>
+        </div>
+        <div class="footer-version">RAWSTUDIO v1.0</div>
+      </footer>
+    </aside>
+
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
