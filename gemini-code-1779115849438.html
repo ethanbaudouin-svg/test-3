@@ -4,23 +4,140 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>RAWSTUDIO - Éditeur Photo</title>
-  <link rel="stylesheet" href="style.css">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap');
+
+    :root {
+      --bg-main: #111;
+      --bg-panel: #161616;
+      --bg-topbar: #141414;
+      --bg-canvas: #0d0d0d;
+      --border-color: #222;
+      --accent-color: #e8c97a;
+      --text-main: #e0e0e0;
+      --text-dimmed: #555;
+      --text-muted: #666;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0; padding: 0;
+      background: var(--bg-main);
+      font-family: 'DM Sans', sans-serif;
+      color: var(--text-main);
+      overflow: hidden;
+    }
+
+    ::-webkit-scrollbar { width: 4px; }
+    ::-webkit-scrollbar-track { background: #1a1a1a; }
+    ::-webkit-scrollbar-thumb { background: #333; border-radius: 2px; }
+
+    .app-container { display: flex; height: 100vh; width: 100%; overflow: hidden; }
+
+    .left-panel {
+      width: 160px; background: var(--bg-panel); border-right: 1px solid var(--border-color);
+      display: flex; flex-direction: column; padding: 20px 12px; overflow-y: auto; flex-shrink: 0;
+    }
+
+    .right-panel {
+      width: 260px; background: var(--bg-panel); border-left: 1px solid var(--border-color);
+      display: flex; flex-direction: column; flex-shrink: 0;
+    }
+
+    .panel-title {
+      font-size: 9px; color: var(--text-dimmed); letter-spacing: 0.15em;
+      text-transform: uppercase; font-family: 'DM Mono', monospace; margin-bottom: 16px;
+    }
+
+    .button-list { display: flex; flex-direction: column; gap: 6px; }
+
+    .preset-btn {
+      background: transparent; border: 1px solid #2a2a2a; color: #777; padding: 8px 10px;
+      border-radius: 6px; cursor: pointer; font-size: 12px; font-family: 'DM Sans', sans-serif;
+      text-align: left; width: 100%; transition: all 0.15s;
+    }
+
+    .preset-btn:hover { background: #2a2a2a; border-color: #555; }
+    .preset-btn.active { background: #222; border-color: var(--accent-color); color: var(--accent-color); }
+
+    .center-area { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+
+    .top-bar {
+      height: 52px; background: var(--bg-topbar); border-bottom: 1px solid var(--border-color);
+      display: flex; align-items: center; padding: 0 20px; gap: 12px; flex-shrink: 0;
+    }
+
+    .brand { font-size: 13px; font-weight: 600; letter-spacing: 0.1em; color: var(--accent-color); font-family: 'DM Mono', monospace; }
+    .divider { width: 1px; height: 20px; background: #2a2a2a; }
+    .info-text { font-size: 12px; color: var(--text-muted); font-family: 'DM Mono', monospace; }
+    .info-text.dimmed { font-size: 11px; color: #444; }
+    .spacer { flex: 1; }
+
+    .image-area {
+      flex: 1; display: flex; align-items: center; justify-content: center;
+      background: var(--bg-canvas); padding: 24px; overflow: hidden; position: relative;
+    }
+    .image-area.dragging { background: rgba(232, 201, 122, 0.03); }
+
+    .placeholder-box { border: 2px dashed #2a2a2a; border-radius: 12px; padding: 60px 80px; text-align: center; cursor: pointer; transition: border-color 0.2s; }
+    .image-area.dragging .placeholder-box { border-color: var(--accent-color); }
+    .placeholder-icon { font-size: 36px; margin-bottom: 16px; }
+    .placeholder-text { font-size: 15px; color: var(--text-dimmed); margin-bottom: 8px; }
+    .placeholder-subtext { font-size: 12px; color: #333; font-family: 'DM Mono', monospace; }
+
+    .image-wrapper { position: relative; max-width: 100%; max-height: 100%; }
+    .image-wrapper img { max-width: 100%; max-height: calc(100vh - 120px); object-fit: contain; display: block; border-radius: 4px; }
+    .vignette-overlay { position: absolute; top: 0; left: 0; right: 0; bottom: 0; border-radius: 4px; pointer-events: none; background: transparent; }
+
+    .tabs-nav { display: flex; border-bottom: 1px solid #1e1e1e; flex-shrink: 0; }
+    .section-tab {
+      flex: 1; padding: 12px 4px; background: transparent; border: none; border-bottom: 2px solid transparent;
+      color: var(--text-dimmed); cursor: pointer; font-size: 10px; font-family: 'DM Mono', monospace;
+      letter-spacing: 0.05em; text-transform: uppercase; transition: color 0.15s;
+    }
+    .section-tab:hover { color: #ccc; }
+    .section-tab.active { border-bottom-color: var(--accent-color); color: var(--accent-color); }
+
+    .sliders-body { flex: 1; overflow-y: auto; padding: 20px 16px; }
+    .slider-group { margin-bottom: 14px; }
+    .slider-header { display: flex; justify-content: space-between; margin-bottom: 6px; }
+    .slider-label { font-size: 11px; color: #8a8a8a; letter-spacing: 0.05em; text-transform: uppercase; font-family: 'DM Mono', monospace; }
+    .slider-value { font-size: 11px; color: var(--text-dimmed); font-family: 'DM Mono', monospace; font-weight: 500; }
+    .slider-value.changed { color: var(--accent-color); }
+
+    .slider-track-container { position: relative; height: 3px; background: #252525; border-radius: 2px; }
+    .slider-fill-bar { position: absolute; left: 0; height: 100%; background: #444; border-radius: 2px; transition: background 0.2s; pointer-events: none; }
+    .slider-fill-bar.changed { background: var(--accent-color); }
+    .slider-input { position: absolute; top: 50%; left: 0; width: 100%; height: 20px; transform: translateY(-50%); opacity: 0; cursor: pointer; margin: 0; }
+    .slider-thumb-visual { position: absolute; top: 50%; width: 13px; height: 13px; background: #888; border-radius: 50%; transform: translate(-50%, -50%); pointer-events: none; transition: background 0.2s, box-shadow 0.2s; }
+    .slider-thumb-visual.changed { background: var(--accent-color); box-shadow: 0 0 8px rgba(232,201,122,0.5); }
+
+    .panel-footer { border-top: 1px solid #1e1e1e; padding: 14px 16px; flex-shrink: 0; }
+    .footer-actions { display: flex; gap: 8px; }
+    .footer-version { margin-top: 10px; font-size: 10px; color: #333; font-family: 'DM Mono', monospace; text-align: center; }
+
+    .action-btn { font-family: 'DM Sans', sans-serif; border: none; border-radius: 6px; cursor: pointer; transition: opacity 0.15s; }
+    .action-btn:hover:not(:disabled) { opacity: 0.85; }
+    .action-btn:disabled { cursor: not-allowed; }
+    .action-btn.primary { background: var(--accent-color); color: #111; font-weight: 600; }
+    .action-btn.primary:disabled { background: #2a2a2a; color: var(--text-dimmed); }
+    .action-btn.secondary { background: #1e1e1e; border: 1px solid #333; color: #aaa; padding: 7px 14px; font-size: 12px; }
+    .action-btn.outline { flex: 1; background: transparent; border: 1px solid #2a2a2a; color: var(--text-muted); padding: 8px; font-size: 11px; }
+
+    #btn-export-bottom { flex: 2; padding: 8px; font-size: 11px; }
+    .hidden { display: none !important; }
+  </style>
 </head>
 <body>
 
   <div class="app-container">
-    
-    <!-- PANEL GAUCHE — Préréglages -->
     <aside class="left-panel">
       <div class="panel-title">Préréglages</div>
-      <div id="presets-container" class="button-list">
-        <!-- Les boutons presets seront générés ici par JS -->
-      </div>
+      <div id="presets-container" class="button-list"></div>
     </aside>
 
-    <!-- CENTRE — Zone d'affichage et Canva -->
     <main class="center-area">
-      <!-- Barre supérieure -->
       <header class="top-bar">
         <div class="brand">RAWSTUDIO</div>
         <div class="divider"></div>
@@ -32,16 +149,12 @@
         <input type="file" id="file-input" accept="image/*" style="display: none;">
       </header>
 
-      <!-- Zone de dépôt / Image -->
       <div id="drop-zone" class="image-area">
-        <!-- État initial : vide -->
         <div id="upload-placeholder" class="placeholder-box">
           <div class="placeholder-icon">⬡</div>
           <div class="placeholder-text">Déposez une photo ou cliquez pour importer</div>
           <div class="placeholder-subtext">JPG · PNG · WEBP</div>
         </div>
-        
-        <!-- État actif : Image chargée -->
         <div id="image-wrapper" class="image-wrapper hidden">
           <img id="preview-image" alt="Aperçu édition">
           <div id="vignette-overlay" class="vignette-overlay"></div>
@@ -49,22 +162,14 @@
       </div>
     </main>
 
-    <!-- PANEL DROIT — Réglages & Sliders -->
     <aside class="right-panel">
-      <!-- Onglets de section -->
       <nav id="sections-tabs" class="tabs-nav">
         <button class="section-tab active" data-section="light">Lumière</button>
         <button class="section-tab" data-section="color">Couleur</button>
         <button class="section-tab" data-section="detail">Détail</button>
         <button class="section-tab" data-section="effects">Effets</button>
       </nav>
-
-      <!-- Conteneur de Sliders dynamiques -->
-      <div id="sliders-container" class="sliders-body">
-        <!-- Les curseurs de réglages seront injectés ici selon l'onglet actif -->
-      </div>
-
-      <!-- Pied de page du panel -->
+      <div id="sliders-container" class="sliders-body"></div>
       <footer class="panel-footer">
         <div class="footer-actions">
           <button id="btn-reset" class="action-btn outline">Réinitialiser</button>
@@ -73,9 +178,243 @@
         <div class="footer-version">RAWSTUDIO v1.0</div>
       </footer>
     </aside>
-
   </div>
 
-  <script src="script.js"></script>
+  <script>
+    const FILTERS = [
+      { id: "exposure", label: "Exposition", min: -100, max: 100, default: 0 },
+      { id: "contrast", label: "Contraste", min: -100, max: 100, default: 0 },
+      { id: "highlights", label: "Hautes lumières", min: -100, max: 100, default: 0 },
+      { id: "shadows", label: "Ombres", min: -100, max: 100, default: 0 },
+      { id: "whites", label: "Blancs", min: -100, max: 100, default: 0 },
+      { id: "blacks", label: "Noirs", min: -100, max: 100, default: 0 },
+      { id: "saturation", label: "Saturation", min: -100, max: 100, default: 0 },
+      { id: "vibrance", label: "Vibrance", min: -100, max: 100, default: 0 },
+      { id: "temperature", label: "Température", min: -100, max: 100, default: 0 },
+      { id: "tint", label: "Teinte", min: -100, max: 100, default: 0 },
+      { id: "sharpness", label: "Netteté", min: 0, max: 100, default: 0 },
+      { id: "noise", label: "Réduction bruit", min: 0, max: 100, default: 0 },
+      { id: "vignette", label: "Vignettage", min: -100, max: 0, default: 0 },
+    ];
+
+    const PRESETS = [
+      { name: "Original", values: {} },
+      { name: "Cinéma", values: { contrast: 30, saturation: -20, shadows: -15, highlights: -10, temperature: -10, vignette: -40 } },
+      { name: "Portrait", values: { exposure: 5, contrast: -10, highlights: -20, saturation: 10, vibrance: 15, sharpness: 30 } },
+      { name: "Paysage", values: { saturation: 20, vibrance: 25, contrast: 15, highlights: -15, sharpness: 40 } },
+      { name: "Vintage", values: { saturation: -30, contrast: 20, temperature: 25, shadows: 20, blacks: 15, vignette: -50 } },
+      { name: "B&W", values: { saturation: -100, contrast: 25, sharpness: 20 } },
+      { name: "Fade", values: { blacks: 30, contrast: -20, saturation: -15, highlights: 10 } },
+      { name: "Vivid", values: { saturation: 40, vibrance: 30, contrast: 20, sharpness: 30 } },
+    ];
+
+    const SECTIONS = [
+      { id: "light", label: "Lumière", keys: ["exposure", "contrast", "highlights", "shadows", "whites", "blacks"] },
+      { id: "color", label: "Couleur", keys: ["saturation", "vibrance", "temperature", "tint"] },
+      { id: "detail", label: "Détail", keys: ["sharpness", "noise"] },
+      { id: "effects", label: "Effets", keys: ["vignette"] },
+    ];
+
+    let state = {
+      image: null, imageName: "",
+      adjustments: Object.fromEntries(FILTERS.map(f => [f.id, f.default])),
+      activePreset: "Original", activeSection: "light", exporting: false
+    };
+
+    const dropZone = document.getElementById('drop-zone');
+    const uploadPlaceholder = document.getElementById('upload-placeholder');
+    const imageWrapper = document.getElementById('image-wrapper');
+    const previewImage = document.getElementById('preview-image');
+    const vignetteOverlay = document.getElementById('vignette-overlay');
+    const fileInput = document.getElementById('file-input');
+    const imageNameEl = document.getElementById('image-name');
+    const imageDimensionsEl = document.getElementById('image-dimensions');
+    const presetsContainer = document.getElementById('presets-container');
+    const slidersContainer = document.getElementById('sliders-container');
+    const tabsNav = document.getElementById('sections-tabs');
+    const btnImportTop = document.getElementById('btn-import-top');
+    const btnExportTop = document.getElementById('btn-export-top');
+    const btnExportBottom = document.getElementById('btn-export-bottom');
+    const btnReset = document.getElementById('btn-reset');
+
+    function init() {
+      renderPresets(); renderSliders(); setupEventListeners(); updateUI();
+    }
+
+    function buildFilter(adj) {
+      const brightness = 1 + adj.exposure / 100;
+      const contrast = 1 + adj.contrast / 100;
+      const saturate = Math.max(0, 1 + adj.saturation / 100);
+      const sepia = adj.temperature > 0 ? adj.temperature / 400 : 0;
+      const hueShift = adj.tint / 3 + (adj.temperature < 0 ? adj.temperature / 6 : 0);
+      const blurVal = adj.noise > 0 ? (adj.noise / 100) * 0.8 : 0;
+      return `brightness(${brightness}) contrast(${contrast}) saturate(${saturate}) sepia(${sepia}) hue-rotate(${hueShift}deg) ${blurVal > 0 ? `blur(${blurVal}px)` : ""}`;
+    }
+
+    function updateUI() {
+      if (state.image) {
+        uploadPlaceholder.classList.add('hidden');
+        imageWrapper.classList.remove('hidden');
+        previewImage.src = state.image.src;
+        previewImage.style.filter = buildFilter(state.adjustments);
+        
+        if (state.adjustments.vignette < 0) {
+          const strength = Math.abs(state.adjustments.vignette) / 100;
+          vignetteOverlay.style.background = `radial-gradient(ellipse at center, transparent 30%, rgba(0,0,0,${strength}) 100%)`;
+          vignetteOverlay.classList.remove('hidden');
+        } else {
+          vignetteOverlay.classList.add('hidden');
+        }
+        imageNameEl.textContent = state.imageName;
+        imageDimensionsEl.textContent = `${state.image.width} × ${state.image.height}`;
+        btnExportTop.removeAttribute('disabled'); btnExportBottom.removeAttribute('disabled');
+      } else {
+        uploadPlaceholder.classList.remove('hidden'); imageWrapper.classList.add('hidden');
+        imageNameEl.textContent = ""; imageDimensionsEl.textContent = "";
+        btnExportTop.setAttribute('disabled', 'true'); btnExportBottom.setAttribute('disabled', 'true');
+      }
+
+      document.querySelectorAll('.preset-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.name === state.activePreset);
+      });
+
+      FILTERS.forEach(f => {
+        const value = state.adjustments[f.id];
+        const input = document.getElementById(`input-${f.id}`);
+        const displayValue = document.getElementById(`val-${f.id}`);
+        const fill = document.getElementById(`fill-${f.id}`);
+        const thumb = document.getElementById(`thumb-${f.id}`);
+
+        if (input && displayValue && fill && thumb) {
+          input.value = value;
+          displayValue.textContent = (value > 0 ? "+" : "") + value;
+          const isChanged = value !== f.default;
+          displayValue.classList.toggle('changed', isChanged);
+          fill.classList.toggle('changed', isChanged);
+          thumb.classList.toggle('changed', isChanged);
+          const pct = ((value - f.min) / (f.max - f.min)) * 100;
+          fill.style.width = `${pct}%`; thumb.style.left = `${pct}%`;
+        }
+      });
+    }
+
+    function renderPresets() {
+      presetsContainer.innerHTML = PRESETS.map(p => `
+        <button class="preset-btn ${state.activePreset === p.name ? 'active' : ''}" data-name="${p.name}">${p.name}</button>
+      `).join('');
+    }
+
+    function renderSliders() {
+      const currentSection = SECTIONS.find(s => s.id === state.activeSection);
+      slidersContainer.innerHTML = currentSection.keys.map(key => {
+        const filter = FILTERS.find(f => f.id === key);
+        const value = state.adjustments[key];
+        const pct = ((value - filter.min) / (filter.max - filter.min)) * 100;
+        const isChanged = value !== filter.default;
+        return `
+          <div class="slider-group">
+            <div class="slider-header">
+              <span class="slider-label">${filter.label}</span>
+              <span id="val-${filter.id}" class="slider-value ${isChanged ? 'changed' : ''}">${value > 0 ? "+" : ""}${value}</span>
+            </div>
+            <div class="slider-track-container">
+              <div id="fill-${filter.id}" class="slider-fill-bar ${isChanged ? 'changed' : ''}" style="width: ${pct}%"></div>
+              <input type="range" id="input-${filter.id}" class="slider-input" min="${filter.min}" max="${filter.max}" value="${value}" data-id="${filter.id}">
+              <div id="thumb-${filter.id}" class="slider-thumb-visual ${isChanged ? 'changed' : ''}" style="left: ${pct}%"></div>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function loadImage(file) {
+      if (!file || !file.type.startsWith("image/")) return;
+      const url = URL.createObjectURL(file);
+      const img = new Image();
+      img.onload = () => {
+        state.image = { src: url, el: img, width: img.naturalWidth, height: img.naturalHeight };
+        state.imageName = file.name;
+        state.adjustments = Object.fromEntries(FILTERS.map(f => [f.id, f.default]));
+        state.activePreset = "Original";
+        updateUI();
+      };
+      img.src = url;
+    }
+
+    async function exportImage() {
+      if (!state.image || state.exporting) return;
+      state.exporting = true;
+      btnExportTop.textContent = "Export..."; btnExportBottom.textContent = "Export...";
+      await new Promise(r => setTimeout(r, 50));
+
+      const canvas = document.createElement("canvas");
+      canvas.width = state.image.width; canvas.height = state.image.height;
+      const ctx = canvas.getContext("2d");
+      const adj = state.adjustments;
+      const brightness = 1 + adj.exposure / 100;
+      const contrast = 1 + adj.contrast / 100;
+      const saturate = Math.max(0, 1 + adj.saturation / 100);
+      const sepia = adj.temperature > 0 ? adj.temperature / 400 : 0;
+      const hue = adj.tint / 3 + (adj.temperature < 0 ? adj.temperature / 6 : 0);
+      const blur = adj.noise > 0 ? (adj.noise / 100) * 0.8 : 0;
+
+      ctx.filter = `brightness(${brightness}) contrast(${contrast}) saturate(${saturate}) sepia(${sepia}) hue-rotate(${hue}deg) ${blur > 0 ? `blur(${blur}px)` : ""}`;
+      ctx.drawImage(state.image.el, 0, 0, state.image.width, state.image.height);
+
+      if (adj.vignette < 0) {
+        const strength = Math.abs(adj.vignette) / 100;
+        const gradient = ctx.createRadialGradient(state.image.width / 2, state.image.height / 2, Math.min(state.image.width, state.image.height) * 0.3, state.image.width / 2, state.image.height / 2, Math.max(state.image.width, state.image.height) * 0.75);
+        gradient.addColorStop(0, "rgba(0,0,0,0)"); gradient.addColorStop(1, `rgba(0,0,0,${strength})`);
+        ctx.filter = "none"; ctx.globalCompositeOperation = "multiply"; ctx.fillStyle = gradient; ctx.fillRect(0, 0, state.image.width, state.image.height); ctx.globalCompositeOperation = "source-over";
+      }
+
+      const link = document.createElement("a");
+      link.download = state.imageName.replace(/\.[^.]+$/, "") + "_edited.png";
+      link.href = canvas.toDataURL("image/png", 1.0); link.click();
+      state.exporting = false; btnExportTop.textContent = "Exporter PNG"; btnExportBottom.textContent = "Exporter";
+    }
+
+    function setupEventListeners() {
+      btnImportTop.addEventListener('click', () => fileInput.click());
+      uploadPlaceholder.addEventListener('click', () => fileInput.click());
+      fileInput.addEventListener('change', (e) => loadImage(e.target.files[0]));
+
+      dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('dragging'); });
+      dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragging'));
+      dropZone.addEventListener('drop', (e) => { e.preventDefault(); dropZone.classList.remove('dragging'); loadImage(e.dataTransfer.files[0]); });
+
+      tabsNav.addEventListener('click', (e) => {
+        if (e.target.classList.contains('section-tab')) {
+          document.querySelectorAll('.section-tab').forEach(t => t.classList.remove('active'));
+          e.target.classList.add('active'); state.activeSection = e.target.dataset.section;
+          renderSliders(); updateUI();
+        }
+      });
+
+      slidersContainer.addEventListener('input', (e) => {
+        if (e.target.classList.contains('slider-input')) {
+          const id = e.target.dataset.id; state.adjustments[id] = Number(e.target.value);
+          state.activePreset = "Custom"; updateUI();
+        }
+      });
+
+      presetsContainer.addEventListener('click', (e) => {
+        const btn = e.target.closest('.preset-btn');
+        if (btn) {
+          const presetName = btn.dataset.name; const preset = PRESETS.find(p => p.name === presetName);
+          state.activePreset = presetName; const base = Object.fromEntries(FILTERS.map(f => [f.id, f.default]));
+          state.adjustments = { ...base, ...preset.values }; updateUI();
+        }
+      });
+
+      btnReset.addEventListener('click', () => {
+        state.adjustments = Object.fromEntries(FILTERS.map(f => [f.id, f.default])); state.activePreset = "Original"; updateUI();
+      });
+
+      btnExportTop.addEventListener('click', exportImage); btnExportBottom.addEventListener('click', exportImage);
+    }
+
+    window.addEventListener('DOMContentLoaded', init);
+  </script>
 </body>
 </html>
